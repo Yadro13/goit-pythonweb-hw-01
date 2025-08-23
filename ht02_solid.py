@@ -1,8 +1,11 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional, List, Tuple
 from datetime import datetime
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 MIN_YEAR = 1450
 CURRENT_YEAR = datetime.now().year
@@ -21,13 +24,20 @@ class Book:
 # ISP: вузький інтерфейс бібліотеки — лише те, що справді потрібно менеджеру
 class LibraryInterface(ABC):
     @abstractmethod
-    def add_book(self, book: Book) -> None: ...
+    def add_book(self, book: Book) -> None: 
+        ...
+    
     @abstractmethod
-    def remove_book(self, title: str) -> bool: ...
+    def remove_book(self, title: str) -> bool: 
+        ...
+    
     @abstractmethod
-    def get_all(self) -> Iterable[Book]: ...
+    def get_all(self) -> Iterable[Book]: 
+        ...
+    
     @abstractmethod
-    def find_by_title(self, title: str) -> Optional[Book]: ...
+    def find_by_title(self, title: str) -> Optional[Book]: 
+        ...
 
 
 # Базова реалізація: in-memory сховище
@@ -63,19 +73,19 @@ class LoggedLibrary(LibraryInterface):
         self._inner = inner
 
     def add_book(self, book: Book) -> None:
-        print(f"[LOG] add: {book.title}")
+        logging.info("[LOG] add: %s", book.title)
         self._inner.add_book(book)
 
     def remove_book(self, title: str) -> bool:
-        print(f"[LOG] remove: {title}")
+        logging.info("[LOG] remove: %s", title)
         return self._inner.remove_book(title)
 
     def get_all(self) -> Iterable[Book]:
-        print("[LOG] get_all")
+        logging.info("[LOG] get_all")
         return self._inner.get_all()
 
     def find_by_title(self, title: str) -> Optional[Book]:
-        print(f"[LOG] find: {title}")
+        logging.info("[LOG] find: %s", title)
         return self._inner.find_by_title(title)
 
 
@@ -90,47 +100,46 @@ class LibraryManager:
 
     def _validate_title(self, title: str) -> bool:
         if not title or not title.strip():
-            print("Title cannot be empty.")
+            logging.info("Title cannot be empty.")
             return False
         if len(title.strip()) < 2:
-            print("Title is too short (min 2 chars).")
+            logging.info("Title is too short (min 2 chars).")
             return False
         if len(title) > 255:
-            print("Title is too long (max 255 chars).")
+            logging.info("Title is too long (max 255 chars).")
             return False
         return True
 
     def _validate_author(self, author: str) -> bool:
         if not author or not author.strip():
-            print("Author cannot be empty.")
+            logging.info("Author cannot be empty.")
             return False
-        a = author.strip()
+        a: str = author.strip()
         if len(a) < 2:
-            print("Author is too short (min 2 chars).")
+            logging.info("Author is too short (min 2 chars).")
             return False
         if len(a) > 255:
-            print("Author is too long (max 255 chars).")
+            logging.info("Author is too long (max 255 chars).")
             return False
-        # Проста перевірка, щоб не було суцільних цифр/сміття
         if a.isdigit():
-            print("Author cannot be only digits.")
+            logging.info("Author cannot be only digits.")
             return False
         return True
 
-    def _validate_year(self, year_str: str) -> tuple[bool, int | None]:
+    def _validate_year(self, year_str: str) -> Tuple[bool, Optional[int]]:
         try:
-            y = int(year_str)
+            y: int = int(year_str)
         except ValueError:
-            print("Year must be an integer.")
+            logging.info("Year must be an integer.")
             return False, None
         if y < 0:
-            print("Year cannot be negative.")
+            logging.info("Year cannot be negative.")
             return False, None
         if y < MIN_YEAR:
-            print(f"Year is too early (min {MIN_YEAR}).")
+            logging.info("Year is too early (min %d).", MIN_YEAR)
             return False, None
         if y > CURRENT_YEAR:
-            print(f"Year cannot be in the future (max {CURRENT_YEAR}).")
+            logging.info("Year cannot be in the future (max %d).", CURRENT_YEAR)
             return False, None
         return True, y
 
@@ -154,24 +163,24 @@ class LibraryManager:
         # унікальність: title+author
         all_books = list(self.library.get_all())
         if self._exists(title, author, all_books):
-            print("Such a book already exists (same title and author).")
+            logging.info("Such a book already exists (same title and author).")
             return
 
         self.library.add_book(Book(title=title, author=author, year=y))
-        print("Book added.")
+        logging.info("Book added.")
 
     def remove_book(self, title: str) -> None:
         title = self._normalize(title)
         ok = self.library.remove_book(title)
-        print("Book removed." if ok else "Book not found.")
+        logging.info("Book removed." if ok else "Book not found.")
 
     def show_books(self) -> None:
         books = list(self.library.get_all())
         if not books:
-            print("No books in library.")
+            logging.info("No books in library.")
             return
         for b in books:
-            print(str(b))
+            logging.info(str(b))
 
 
 def main() -> None:
@@ -197,7 +206,7 @@ def main() -> None:
             case "exit":
                 break
             case _:
-                print("Invalid command. Please try again.")
+                logging.info("Invalid command. Please try again.")
 
 
 if __name__ == "__main__":

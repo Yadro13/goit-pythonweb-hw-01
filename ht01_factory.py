@@ -1,11 +1,15 @@
+from __future__ import annotations
+import logging
 from abc import ABC, abstractmethod
+
+logging.basicConfig(level=logging.INFO)
 
 # 1) Абстрактний базовий клас
 class Vehicle(ABC):
-    def __init__(self, make: str, model: str, spec: str = ""):
-        self.make = make
-        self.model = model
-        self.spec = spec  # регіональна специфікація (наприклад, "US Spec", "EU Spec")
+    def __init__(self, make: str, model: str, spec: str | None = None) -> None:
+        self.make: str = make
+        self.model: str = model
+        self.spec: str | None = spec  # регіональна специфікація (наприклад, "US Spec", "EU Spec")
 
     @abstractmethod
     def start_engine(self) -> None:
@@ -13,18 +17,19 @@ class Vehicle(ABC):
 
     # Утиліта для красивої вивіски з урахуванням spec
     def _label(self) -> str:
-        return f"{self.make} {self.model}{f' ({self.spec})' if self.spec else ''}"
+        spec = f" ({self.spec})" if self.spec else ""
+        return f"{self.make} {self.model}{spec}"
 
 
 # 2) Конкретні транспортні засоби
 class Car(Vehicle):
     def start_engine(self) -> None:
-        print(f"{self._label()}: Двигун запущено")
+        logging.info("%s: Двигун запущено", self._label())
 
 
 class Motorcycle(Vehicle):
     def start_engine(self) -> None:
-        print(f"{self._label()}: Мотор заведено")
+        logging.info("%s: Мотор заведено", self._label())
 
 
 # 3) Абстрактна фабрика
